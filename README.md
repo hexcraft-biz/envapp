@@ -1,14 +1,26 @@
-# env
-The blocks below are the env settings for the modules 
+# envapp
 
-## app
-```bash
-APP_TITLE=app_title
-APP_HOST=app.example.com
+## usage
+### ENV variable:
+```
+APP_ENV=development|debug|stage|production
+APP_HOST=my.example.app
 APP_PATH=/path
-APP_PORT=80
-GIN_MODE=debug
-OAUTH2_ENABLED=false
+APP_PORT=8080
 TIMEZONE=
 TRUST_PROXY=localhost
+VISIBILITY=internal|external
+```
+
+### secrets JSON file:
+```json
+{
+  "env": "development|debug|stage|production",
+  "host": "my.example.app",
+  "path": "/path",
+  "port": "8080",
+  "timezone": "",
+  "trustProxy": "localhost",
+  "visibility": "internal|external"
+}
 ```
