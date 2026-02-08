@@ -1,7 +1,7 @@
-package app
+package envapp
 
 import (
-	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -9,43 +9,67 @@ import (
 )
 
 // ================================================================
-//
-// ================================================================
 type App struct {
-	AppEnv     string
-	AppHost    string
-	AppPath    string
-	AppPort    string
-	Location   *time.Location
-	TrustProxy string
-	Visibility string
-	AppBaseURL *url.URL
+	Env        string         `json:"env"`
+	Host       string         `json:"host"`
+	Path       string         `json:"path"`
+	Port       string         `json:"port"`
+	Timezone   string         `json:"timezone"`
+	Location   *time.Location `json:"-"`
+	TrustProxy string         `json:"trustProxy"`
+	Visibility string         `json:"visibility"`
+	BaseURL    *url.URL       `json:"-"`
+}
+
+const (
+	EnvDevelopment = "development"
+	EnvDebug       = "debug"
+	EnvStage       = "stage"
+	EnvProduction  = "production"
+
+	VisibilityInternal = "internal"
+	VisibilityExternal = "external"
+)
+
+func (r *App) Sanitize() error {
+	var err error
+
+	switch r.Env {
+	case EnvDevelopment, EnvDebug, EnvStage, EnvProduction:
+	default:
+		return fmt.Errorf("app: invalid env (%s|%s|%s|%s)", EnvDevelopment, EnvDebug, EnvStage, EnvProduction)
+	}
+
+	switch r.Visibility {
+	case VisibilityInternal, VisibilityExternal:
+	default:
+		return fmt.Errorf("app: invalid visibility. (%s|%s)", VisibilityInternal, VisibilityExternal)
+	}
+
+	r.Location, err = time.LoadLocation(r.Timezone)
+	if err != nil {
+		return err
+	}
+
+	r.BaseURL, err = url.ParseRequestURI("https://" + path.Join(r.Host, r.Path))
+	return err
 }
 
 // ================================================================
-//
-// ================================================================
 func New() (*App, error) {
-	loc, err := time.LoadLocation(os.Getenv("TIMEZONE"))
-	if err != nil {
+	env := App{
+		Env:        os.Getenv("APP_ENV"),
+		Host:       os.Getenv("APP_HOST"),
+		Path:       path.Join("/", os.Getenv("APP_PATH")),
+		Port:       os.Getenv("APP_PORT"),
+		Timezone:   os.Getenv("TIMEZONE"),
+		TrustProxy: os.Getenv("TRUST_PROXY"),
+		Visibility: os.Getenv("VISIBILITY"),
+	}
+
+	if err := env.Sanitize(); err != nil {
 		return nil, err
 	}
 
-	visibility := os.Getenv("VISIBILITY")
-	if visibility != "internal" && visibility != "external" {
-		return nil, errors.New("Invalid VISIBILITY value. (internal | external)")
-	}
-
-	env := &App{
-		AppEnv:     os.Getenv("APP_ENV"),
-		AppHost:    os.Getenv("APP_HOST"),
-		AppPath:    path.Join("/", os.Getenv("APP_PATH")),
-		AppPort:    os.Getenv("APP_PORT"),
-		Location:   loc,
-		TrustProxy: os.Getenv("TRUST_PROXY"),
-		Visibility: visibility,
-	}
-
-	env.AppBaseURL, err = url.ParseRequestURI("https://" + path.Join(env.AppHost, env.AppPath))
-	return env, err
+	return &env, nil
 }
