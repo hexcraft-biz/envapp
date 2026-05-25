@@ -51,8 +51,13 @@ func (r *App) Sanitize() error {
 		return err
 	}
 
-	r.BaseURL, err = url.ParseRequestURI("https://" + path.Join(r.Host, r.Path))
-	return err
+	r.BaseURL, err = url.ParseRequestURI("https://" + r.Host)
+	if err != nil {
+		return err
+	}
+	r.BaseURL.Path = path.Join("/", r.Path)
+
+	return nil
 }
 
 // ================================================================
