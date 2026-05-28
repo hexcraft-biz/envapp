@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -56,6 +57,10 @@ func (r *App) Sanitize() error {
 		return err
 	}
 	r.BaseURL.Path = path.Join("/", r.Path)
+
+	if !strings.HasSuffix(r.BaseURL.Path, "/") {
+		r.BaseURL.Path += "/"
+	}
 
 	return nil
 }
